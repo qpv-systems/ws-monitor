@@ -6,7 +6,6 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/proxy.js",
-    "proxy": "ts-node src/proxy.ts",
     "dev": "nodemon src/proxy.ts"
   },
   "keywords": [],
