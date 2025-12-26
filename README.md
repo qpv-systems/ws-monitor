@@ -7,7 +7,7 @@ A powerful tool for monitoring, debugging, and analyzing WebSocket/Socket.IO mes
 ![WS Monitor](ws-monitor.JPG)
 
 ## Live Demo
-- **Main App**: [ws-monitor.quangpv.top](https://ws-monitor.quangpv.top/)
+- **Demo Video**: [ws-monitor.quangpv.top/#demo](https://ws-monitor.quangpv.top/#demo)
 - **Playground**: [ws-monitor.quangpv.top/playground](https://ws-monitor.quangpv.top/playground)
 
 ## Purpose
