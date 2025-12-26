@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  ws-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ws-monitor
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

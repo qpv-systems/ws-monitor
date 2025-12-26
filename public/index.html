@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Proxy Monitor</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css?v=1.0.1">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>WebSocket Proxy Monitor</h1>
+        <div class="header-right">
+            <div id="connectionStatus" class="status-badge status-ui" title="Proxy UI is connected to Proxy WS Server">
+                UI: Connecting...</div>
+            <div id="proxyStatusBadge" class="status-badge status-idle"
+                title="Proxy WS Server is connected to Target WS Server">PROXY: IDLE</div>
+            <a href="https://github.com" target="_blank" class="github-link" title="View on GitHub">
+                <svg class="github-icon" viewBox="0 0 24 24">
+                    <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <label>Proxy Host:</label>
+            <input type="text" id="proxyHost" placeholder="ws://localhost:8000" style="width: 180px;"
+                oninput="updateProxyUrlDisplay()">
+        </div>
+
+        <div class="toolbar-group">
+            <label>Protocol:</label>
+            <select id="protocolSelect" onchange="updateProxyUrlDisplay()"
+                style="background: #3c3c3c; color: #fff; border: 1px solid #555; padding: 5px; border-radius: 3px;">
+                <option value="ws">WebSocket</option>
+                <option value="socketio">Socket.IO</option>
+            </select>
+        </div>
+
+        <div class="toolbar-group">
+            <label>Target:</label>
+            <input type="text" id="targetUrl" value="wss://ws-monitor-demo.quangpv.top" placeholder="ws://example.com/"
+                style="width: 250px;" oninput="updateProxyUrlDisplay()">
+            <button onclick="setTarget()" style="margin-right: 5px;">Set Target</button>
+            <button id="testBtn" onclick="testConnection()">Test Connection</button>
+        </div>
+
+        <div class="toolbar-group">
+            <label>Session ID:</label>
+            <input type="text" id="sessionIdInput" placeholder="Auto-generated" style="width: 250px;">
+            <button onclick="generateNewSessionId()">New</button>
+        </div>
+
+        <div class="toolbar-group">
+            <label>Proxy URL:</label>
+            <input type="text" id="proxyUrlDisplay" value="" disabled
+                style="width: 450px; color: #aaa; background: #222;">
+            <button class="secondary" onclick="copyProxyUrl(this)">Copy</button>
+        </div>
+
+        <div class="toolbar-group">
+            <label>Active Target:</label>
+            <span id="activeTargetDisplay" style="color: #aaa; font-family: monospace; font-size: 0.9rem;">None</span>
+        </div>
+
+        <div class="toolbar-group">
+            <label>Filter By Field:</label>
+            <input type="text" id="filterByField" placeholder="e.g. type, event_name, action, etc, ..."
+                oninput="rerenderList()" style="width: 300px;">
+            <label><input type="checkbox" id="filterBySessionId" onchange="rerenderList()" checked> Filter by Session
+                ID</label>
+        </div>
+
+        <div class="toolbar-group">
+            <button class="secondary" onclick="openScriptModal()">Scripting</button>
+            <button class="secondary" onclick="openEmbedModal()">Embed Page</button>
+            <button class="secondary" onclick="openPlayground()">Playground</button>
+            <button class="secondary" onclick="closeAllPopups()">Close Popups</button>
+        </div>
+
+        <div style="flex-grow: 1;"></div>
+        <button class="secondary" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <!-- Drop Zone: The entire main container -->
+    <div class="main-container" id="mainContainer" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <!-- Left Panel -->
+        <div class="message-list-panel">
+            <div class="list-header">
+                <span>Messages</span>
+                <span id="msgCount" style="font-weight: normal; color: #888;">0</span>
+            </div>
+            <div class="message-list" id="messageList">
+                <!-- Items go here -->
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="detail-panel">
+            <div class="detail-header">
+                <span id="detailTitle">Message Details</span>
+                <button class="secondary" onclick="copyToClipboard()" id="copyBtn" style="display: none;">Copy
+                    JSON</button>
+            </div>
+            <div class="detail-metadata" id="detailMetadata" style="display: none;">
+                <!-- Metadata items injected here -->
+            </div>
+            <div class="detail-content" id="detailContent">
+                <div class="empty-state">Select a message to view details</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripting Modal -->
+    <div class="modal-overlay" id="scriptModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 style="margin:0; color:#fff;">Code Injection: Custom Decryption</h3>
+                <button class="popup-close" onclick="closeScriptModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div
+                    style="padding: 10px 15px; background: #252526; color: #888; font-size: 0.85rem; border-bottom: 1px solid #333;">
+                    Define <code>customDecrypt(payload)</code>.
+                    Return the modified string/object.
+                </div>
+                <textarea id="scriptEditor" class="code-editor" spellcheck="false">// Example:
+// Data may be encrypted using AES, Base64, or any other method.
+// But Proxy WS doesn't know how to decrypt it.
+// So you can define customDecrypt(payload) to decrypt it.
+// 
+// Example:
+// [async] function customDecrypt(payload) {
+//     return payload; // expected return value is string or object
+// }
+
+function customDecrypt(payload) {
+    return payload;
+}
+</textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeScriptModal()">Cancel</button>
+                <button onclick="saveScript()">Save & Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embed Modal -->
+    <div class="modal-overlay" id="embedModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 style="margin:0; color:#fff;">Embed Custom Page (HTML / CSS / JS)</h3>
+                <button class="popup-close" onclick="closeEmbedModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div
+                    style="padding: 10px 15px; background: #252526; color: #888; font-size: 0.85rem; border-bottom: 1px solid #333;">
+                    Load your HTML, CSS, JS files (or paste content) and render inside the monitor.
+                </div>
+                <div
+                    style="padding: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;">
+                    <div>
+                        <label style="font-size:0.85rem; color:#aaa;">HTML File</label><br>
+                        <input type="file" id="embedHtmlFile" class="file-input" accept=".html,.htm,text/html">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; color:#aaa;">CSS File</label><br>
+                        <input type="file" id="embedCssFile" class="file-input" accept=".css,text/css">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; color:#aaa;">JS File</label><br>
+                        <input type="file" id="embedJsFile" class="file-input"
+                            accept=".js,application/javascript,text/javascript">
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction: column; gap: 8px; padding: 0 12px 12px 12px;">
+                    <label style="font-size:0.9rem; color:#ccc;">HTML</label>
+                    <textarea id="embedHtml" class="code-editor" spellcheck="false" style="height:150px;"></textarea>
+                    <label style="font-size:0.9rem; color:#ccc;">CSS</label>
+                    <textarea id="embedCss" class="code-editor" spellcheck="false" style="height:120px;"></textarea>
+                    <label style="font-size:0.9rem; color:#ccc;">JS</label>
+                    <textarea id="embedJs" class="code-editor" spellcheck="false" style="height:140px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeEmbedModal()">Cancel</button>
+                <button onclick="applyEmbed()">Load & Open</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Template (Hidden) -->
+    <template id="popupTemplate">
+        <div class="popup">
+            <div class="popup-header" onmousedown="startDrag(event, this.parentElement)">
+                <div style="display:flex; align-items:center; overflow:hidden;">
+                    <span class="popup-title">Message Details</span>
+                    <span class="popup-time"
+                        style="font-size:0.8rem; color:#aaa; margin-left:10px; white-space:nowrap;"></span>
+                </div>
+                <div>
+                    <button class="secondary" style="margin-right:6px; padding:4px 8px; font-size:0.8rem;"
+                        onclick="copyPopupContent(this)">Copy</button>
+                    <button class="popup-close" onclick="closePopup(this)">×</button>
+                </div>
+            </div>
+            <div class="popup-content"></div>
+        </div>
+    </template>
+
+    <script src="monitor.js?v=1.0.3"></script>
+</body>
+
+</html>
