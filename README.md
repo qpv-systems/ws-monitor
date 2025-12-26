@@ -2,6 +2,10 @@
 
 A powerful tool for monitoring, debugging, and analyzing WebSocket/Socket.IO message flows between a Client and a Server.
 
+ 
+
+![WS Monitor](ws-monitor.JPG)
+
 ## Live Demo
 - **Main App**: [ws-monitor.quangpv.top](https://ws-monitor.quangpv.top/)
 - **Playground**: [ws-monitor.quangpv.top/playground](https://ws-monitor.quangpv.top/playground)
