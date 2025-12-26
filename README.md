@@ -95,3 +95,7 @@ sequenceDiagram
 3.  **Set Target**: Input your actual WebSocket Server URL and click **Set**.
 4.  **Connect Client**: Update your app to connect to `ws://localhost:8000`.
 5.  **Monitor**: Watch real-time traffic on the dashboard.
+
+---
+
+Feel free to comment or clone this repo. If you find any issues, please let me know!

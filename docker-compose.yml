@@ -12,8 +12,8 @@ services:
     env_file:
       - .env
     networks:
-      - shared-network
+      - ws-monitor-network
 
 networks:
-  shared-network:
-    external: true
+  ws-monitor-network:
+    driver: bridge
