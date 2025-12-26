@@ -90,7 +90,7 @@ sequenceDiagram
 
 ## Quick Start
 
-1.  **Run Proxy Server**: `npm start` (Default port: 8000).
+1.  **Run Proxy Server**: `yarn dev` (Default port: 8000).
 2.  **Access Monitor UI**: Open `http://localhost:8000/playground`.
 3.  **Set Target**: Input your actual WebSocket Server URL and click **Set**.
 4.  **Connect Client**: Update your app to connect to `ws://localhost:8000`.
